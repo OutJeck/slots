@@ -2,7 +2,14 @@ import pytest
 from fastapi.testclient import TestClient
 
 from main import app
-from store import SessionStore, get_store
+from store import DEFAULT_USER_ID, SessionStore, get_store, users_db
+
+
+@pytest.fixture(autouse=True)
+def reset_users_db():
+    users_db[DEFAULT_USER_ID] = 0
+    yield
+    users_db[DEFAULT_USER_ID] = 0
 
 
 @pytest.fixture
@@ -51,10 +58,12 @@ def test_cashout_returns_amount_json(client: TestClient, store: SessionStore):
     response = client.post(f"/api/game/{session_id}/cashout")
     assert response.status_code == 200
     body = response.json()
-    assert set(body.keys()) == {"session_id", "amount"}
+    assert set(body.keys()) == {"session_id", "amount", "account_balance"}
     assert body["session_id"] == session_id
     assert body["amount"] == 10
+    assert body["account_balance"] == 10
     assert store.get_session(session_id) is None
+    assert users_db[DEFAULT_USER_ID] == 10
 
 
 def test_roll_unknown_session_returns_404(client: TestClient):

@@ -9,7 +9,7 @@ def _force_redraws_to_lose(monkeypatch):
     monkeypatch.setattr(
         game_service,
         "_draw_symbols",
-        lambda: ["C", "L", "O"],
+        lambda: ["🍒", "🍋", "🍊"],
     )
 
 
@@ -19,7 +19,7 @@ def _lose_rate(balance_before_win: int, trials: int, monkeypatch) -> float:
     for _ in range(trials):
         _symbols, reward = game_service._apply_house_edge(
             balance_before_win,
-            ["C", "C", "C"],
+            ["🍒", "🍒", "🍒"],
             10,
         )
         if reward == 0:
@@ -57,14 +57,14 @@ def test_roll_fair_session_applies_cost_and_payout(monkeypatch):
     monkeypatch.setattr(
         game_service,
         "_draw_symbols",
-        lambda: ["C", "C", "C"],
+        lambda: ["🍒", "🍒", "🍒"],
     )
     monkeypatch.setattr(game_service.random, "random", lambda: 1.0)
 
     result = game_service.roll(session.session_id, store)
     assert result.reward == 10
     assert result.credits == 19
-    assert result.symbols == ["C", "C", "C"]
+    assert result.symbols == ["🍒", "🍒", "🍒"]
 
 
 def test_cash_out_deletes_session():

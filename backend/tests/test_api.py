@@ -39,7 +39,7 @@ def test_roll_returns_symbols_reward_and_credits(
     assert set(body.keys()) == {"session_id", "symbols", "reward", "credits"}
     assert body["session_id"] == session_id
     assert len(body["symbols"]) == 3
-    assert all(symbol in {"C", "L", "O", "W"} for symbol in body["symbols"])
+    assert all(symbol in {"🍒", "🍋", "🍊", "🍉"} for symbol in body["symbols"])
     assert isinstance(body["reward"], int)
     assert body["credits"] == store.get_session(session_id)
 

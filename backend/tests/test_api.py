@@ -92,3 +92,15 @@ def test_health(client: TestClient):
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+def test_roll_after_cashout_returns_404(client: TestClient):
+    start = client.post("/api/game/start").json()
+    session_id = start["session_id"]
+
+    cashout = client.post(f"/api/game/{session_id}/cashout")
+    assert cashout.status_code == 200
+
+    response = client.post(f"/api/game/{session_id}/roll")
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Session not found"}

@@ -23,6 +23,7 @@ function App() {
   const [symbols, setSymbols] = useState<DisplayRow>(INITIAL_ROW)
   const [phase, setPhase] = useState<Phase>('loading')
   const [finalAmount, setFinalAmount] = useState<number | null>(null)
+  const [accountBalance, setAccountBalance] = useState<number | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   function clearRevealTimers() {
@@ -133,6 +134,7 @@ function App() {
     try {
       const result = await cashOut(sessionId)
       setFinalAmount(result.amount)
+      setAccountBalance(result.account_balance)
       setSessionId(null)
       setPhase('gameover')
     } catch (error) {
@@ -154,12 +156,14 @@ function App() {
           {phase !== 'gameover' && <Balance credits={credits} />}
           <div className="play-row">
             <SlotRow symbols={symbols} />
-            <SpinButton
-              disabled={!canSpin}
-              onClick={() => {
-                void handleSpin()
-              }}
-            />
+            {phase !== 'gameover' && (
+              <SpinButton
+                disabled={!canSpin}
+                onClick={() => {
+                  void handleSpin()
+                }}
+              />
+            )}
           </div>
           {phase !== 'gameover' && (
             <CashOutButton
@@ -175,6 +179,7 @@ function App() {
       {phase === 'gameover' && finalAmount !== null && (
         <p className="game-over">
           Game Over — cashed out {finalAmount} credits
+          {accountBalance !== null && ` (account: ${accountBalance})`}
         </p>
       )}
 

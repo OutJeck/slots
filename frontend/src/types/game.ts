@@ -26,4 +26,5 @@ export interface RollResponse {
 export interface CashOutResponse {
   session_id: string
   amount: number
+  account_balance: number
 }

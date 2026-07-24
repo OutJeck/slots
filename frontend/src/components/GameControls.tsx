@@ -1,24 +1,30 @@
-type GameControlsProps = {
-  canSpin: boolean
-  canCashOut: boolean
-  onSpin: () => void
-  onCashOut: () => void
+type ActionButtonProps = {
+  disabled: boolean
+  onClick: () => void
 }
 
-export function GameControls({
-  canSpin,
-  canCashOut,
-  onSpin,
-  onCashOut,
-}: GameControlsProps) {
+export function SpinButton({ disabled, onClick }: ActionButtonProps) {
   return (
-    <div className="controls">
-      <button type="button" onClick={onSpin} disabled={!canSpin}>
-        Spin
-      </button>
-      <button type="button" onClick={onCashOut} disabled={!canCashOut}>
-        Cash Out
-      </button>
-    </div>
+    <button
+      type="button"
+      className="action-button"
+      onClick={onClick}
+      disabled={disabled}
+    >
+      Spin
+    </button>
+  )
+}
+
+export function CashOutButton({ disabled, onClick }: ActionButtonProps) {
+  return (
+    <button
+      type="button"
+      className="action-button cash-out"
+      onClick={onClick}
+      disabled={disabled}
+    >
+      Cash Out
+    </button>
   )
 }

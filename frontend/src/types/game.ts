@@ -1,5 +1,12 @@
 export type SlotSymbol = '🍒' | '🍋' | '🍊' | '🍉'
 
+export const REEL_STRIP_SYMBOLS: readonly SlotSymbol[] = [
+  '🍒',
+  '🍋',
+  '🍊',
+  '🍉',
+]
+
 export type DisplaySymbol = SlotSymbol | 'X' | '-'
 
 export type DisplayRow = [DisplaySymbol, DisplaySymbol, DisplaySymbol]

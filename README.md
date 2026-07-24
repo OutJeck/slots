@@ -68,6 +68,6 @@ pytest -q
 - `components/*` — presentational `Balance`, `SlotRow`, `GameControls`
 
 Sessions live in process memory. Rolls cost 1 credit. Three matching symbols
-pay out (C=10, L=20, O=30, W=40). When `balance_before_win` is 40–60, winning
+pay out (🍒=10, 🍋=20, 🍊=30, 🍉=40). When `balance_before_win` is 40–60, winning
 results have a 30% chance to be re-drawn; above 60 the chance is 60%. Below 40,
 outcomes stay fair.

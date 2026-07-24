@@ -1,4 +1,4 @@
-export type SlotSymbol = 'C' | 'L' | 'O' | 'W'
+export type SlotSymbol = '🍒' | '🍋' | '🍊' | '🍉'
 
 export type DisplaySymbol = SlotSymbol | 'X' | '-'
 

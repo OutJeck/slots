@@ -6,8 +6,8 @@ from store import SessionStore
 
 STARTING_CREDITS = 10
 ROLL_COST = 1
-SYMBOLS = ("C", "L", "O", "W")
-PAYOUTS = {"C": 10, "L": 20, "O": 30, "W": 40}
+SYMBOLS = ("🍒", "🍋", "🍊", "🍉")
+PAYOUTS = {"🍒": 10, "🍋": 20, "🍊": 30, "🍉": 40}
 
 
 class SessionNotFoundError(Exception):

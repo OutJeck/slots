@@ -1,5 +1,9 @@
 export type SlotSymbol = 'C' | 'L' | 'O' | 'W'
 
+export type DisplaySymbol = SlotSymbol | 'X' | '-'
+
+export type DisplayRow = [DisplaySymbol, DisplaySymbol, DisplaySymbol]
+
 export interface SessionResponse {
   session_id: string
   credits: number

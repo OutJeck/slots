@@ -116,9 +116,7 @@ function App() {
       spinIdRef.current += 1
       setSymbols(previousSymbols)
       setCredits(previousCredits)
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Spin failed',
-      )
+      setErrorMessage(error instanceof Error ? error.message : 'Spin failed')
       setPhase('ready')
       pendingResultRef.current = null
     }

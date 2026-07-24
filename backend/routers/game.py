@@ -20,9 +20,9 @@ def roll(
     try:
         return game_service.roll(session_id, store)
     except game_service.SessionNotFoundError:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="Session not found") from None
     except game_service.InsufficientCreditsError:
-        raise HTTPException(status_code=400, detail="Insufficient credits")
+        raise HTTPException(status_code=400, detail="Insufficient credits") from None
 
 
 @router.post("/{session_id}/cashout", response_model=CashOutResponse)
@@ -33,4 +33,4 @@ def cashout(
     try:
         return game_service.cash_out(session_id, store)
     except game_service.SessionNotFoundError:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="Session not found") from None

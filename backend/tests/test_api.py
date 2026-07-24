@@ -27,7 +27,9 @@ def test_start_returns_session_json(client: TestClient):
     assert body["credits"] == 10
 
 
-def test_roll_returns_symbols_reward_and_credits(client: TestClient, store: SessionStore):
+def test_roll_returns_symbols_reward_and_credits(
+    client: TestClient, store: SessionStore
+):
     start = client.post("/api/game/start").json()
     session_id = start["session_id"]
 

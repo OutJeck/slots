@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { cashOut, roll, startGame } from './api/game'
 import { Balance } from './components/Balance'
-import { GameControls } from './components/GameControls'
+import { CashOutButton, SpinButton } from './components/GameControls'
 import { SlotRow } from './components/SlotRow'
 import type { DisplayRow, RollResponse } from './types/game'
 import './App.css'
@@ -152,17 +152,23 @@ function App() {
       {phase !== 'loading' && phase !== 'error' && (
         <>
           {phase !== 'gameover' && <Balance credits={credits} />}
-          <SlotRow symbols={symbols} />
-          <GameControls
-            canSpin={canSpin}
-            canCashOut={canCashOut}
-            onSpin={() => {
-              void handleSpin()
-            }}
-            onCashOut={() => {
-              void handleCashOut()
-            }}
-          />
+          <div className="play-row">
+            <SlotRow symbols={symbols} />
+            <SpinButton
+              disabled={!canSpin}
+              onClick={() => {
+                void handleSpin()
+              }}
+            />
+          </div>
+          {phase !== 'gameover' && (
+            <CashOutButton
+              disabled={!canCashOut}
+              onClick={() => {
+                void handleCashOut()
+              }}
+            />
+          )}
         </>
       )}
 

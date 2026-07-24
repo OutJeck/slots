@@ -11,3 +11,8 @@ class RollResponse(BaseModel):
     symbols: list[str]
     reward: int
     credits: int
+
+
+class CashOutResponse(BaseModel):
+    session_id: str
+    amount: int

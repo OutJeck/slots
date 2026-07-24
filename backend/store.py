@@ -11,5 +11,12 @@ class SessionStore:
     def update_session(self, session_id: str, credits: int) -> None:
         self._sessions[session_id] = credits
 
+    def delete_session(self, session_id: str) -> int | None:
+        return self._sessions.pop(session_id, None)
+
 
 session_store = SessionStore()
+
+
+def get_store() -> SessionStore:
+    return session_store

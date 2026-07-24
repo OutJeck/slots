@@ -124,3 +124,81 @@ def test_cash_out_credits_user_account():
         raise AssertionError("expected SessionNotFoundError")
     except game_service.SessionNotFoundError:
         pass
+
+
+def test_payout_table_for_matching_and_mixed_symbols():
+    assert game_service._calculate_reward(["🍒", "🍒", "🍒"]) == 10
+    assert game_service._calculate_reward(["🍋", "🍋", "🍋"]) == 20
+    assert game_service._calculate_reward(["🍊", "🍊", "🍊"]) == 30
+    assert game_service._calculate_reward(["🍉", "🍉", "🍉"]) == 40
+    assert game_service._calculate_reward(["🍒", "🍋", "🍊"]) == 0
+
+
+def test_roll_loss_deducts_exactly_one_credit(monkeypatch):
+    store = SessionStore()
+    session = game_service.start_session(store)
+    monkeypatch.setattr(
+        game_service,
+        "_draw_symbols",
+        lambda: ["🍒", "🍋", "🍊"],
+    )
+
+    result = game_service.roll(session.session_id, store)
+
+    assert result.reward == 0
+    assert result.credits == 9
+
+
+def test_roll_fair_band_at_39_keeps_win_despite_cheat_rng(monkeypatch):
+    store = SessionStore()
+    session = game_service.start_session(store)
+    store.update_session(session.session_id, 39)
+    monkeypatch.setattr(
+        game_service,
+        "_draw_symbols",
+        lambda: ["🍒", "🍒", "🍒"],
+    )
+    monkeypatch.setattr(game_service.random, "random", lambda: 0.0)
+
+    result = game_service.roll(session.session_id, store)
+
+    assert result.reward == 10
+    assert result.credits == 48
+
+
+def test_roll_high_band_at_61_can_reroll_win_to_loss(monkeypatch):
+    store = SessionStore()
+    session = game_service.start_session(store)
+    store.update_session(session.session_id, 61)
+
+    draws = {"n": 0}
+
+    def draw():
+        draws["n"] += 1
+        if draws["n"] == 1:
+            return ["🍒", "🍒", "🍒"]
+        return ["🍒", "🍋", "🍊"]
+
+    monkeypatch.setattr(game_service, "_draw_symbols", draw)
+    monkeypatch.setattr(game_service.random, "random", lambda: 0.0)
+
+    result = game_service.roll(session.session_id, store)
+
+    assert result.reward == 0
+    assert result.symbols == ["🍒", "🍋", "🍊"]
+    assert result.credits == 60
+
+
+def test_cash_out_accumulates_account_balance():
+    users_db[DEFAULT_USER_ID] = 0
+    store = SessionStore()
+
+    first = game_service.start_session(store)
+    cash1 = game_service.cash_out(first.session_id, store)
+    assert cash1.account_balance == 10
+
+    second = game_service.start_session(store)
+    cash2 = game_service.cash_out(second.session_id, store)
+    assert cash2.amount == 10
+    assert cash2.account_balance == 20
+    assert users_db[DEFAULT_USER_ID] == 20

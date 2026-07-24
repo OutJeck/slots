@@ -49,10 +49,10 @@ pytest -q
 
 (`backend/pytest.ini` sets `pythonpath = .` so imports resolve the same way as `uvicorn main:app`.)
 
-- `tests/test_house_edge.py` — credit-band cheat probabilities, single re-roll,
-  pre-cost tier boundary, payout/cash-out account behavior
-- `tests/test_api.py` — FastAPI `TestClient` coverage for 200 JSON shapes and
-  404 / 400 edge cases
+- `tests/test_house_edge.py` — house-edge bands/stats, single re-roll, pre-cost
+  boundaries (39/40/61), payout table, loss path, account cash-out accumulation
+- `tests/test_api.py` — FastAPI `TestClient` 200 JSON shapes, 404 / 400 edges,
+  roll-after-cashout
 
 **Frontend**
 
@@ -62,42 +62,24 @@ npm install
 npm run test
 ```
 
-- `src/App.test.tsx` — smoke test: mocked session start shows Credits: 10 and Spin
+- `src/App.test.tsx` — session start, start failure, spin timing (fake timers),
+  busy disables, cash-out / game over, roll error restore
+- `src/components/SlotRow.test.tsx` — idle symbols vs spinning strip
+- `src/api/game.test.ts` — fetch OK / error mapping
 
-## TODO: tests worth adding
+## Test coverage notes
 
-Gaps relative to what we already cover — useful for fuller assignment/CI confidence:
-
-### Backend
-
-- [ ] **Payout table unit tests** — each three-of-a-kind (cherry/lemon/orange/watermelon)
-      yields 10 / 20 / 30 / 40; mixed symbols yield `reward == 0`
-- [ ] **Loss path** — roll with forced non-matching symbols: credits decrease by exactly 1
-- [ ] **Fair band at 39 via `roll()`** — session at 39 credits, forced win + always-cheat
-      RNG: win is kept (proves post-cost 38 is irrelevant; pairs with existing test at 40)
-- [ ] **High-band boundary at 61** — same pattern as the mid-band integration test
-- [ ] **Account accumulation** — two sequential sessions cash out; `account_balance` sums
-- [ ] **API: roll after cash-out** — same `session_id` returns 404
-- [ ] **API: openapi/schema smoke** — optional `TestClient` GET `/openapi.json` if reviewers
-      care about contract docs
-
-### Frontend
-
-- [ ] **Start failure** — mock `startGame` reject; assert error message and no playable Spin
-- [ ] **Spin happy path** — mock `roll`; click Spin; assert optimistic credits −1, then final
-      balance/symbols after fake timers (1s / 2s / 3s reveals)
-- [ ] **Spin disabled while busy** — during pending roll / reveal, Spin and Cash Out disabled
-- [ ] **Cash out** — mock `cashOut`; click Cash Out; assert Game Over text and controls gone
-- [ ] **Insufficient credits UX** — mock roll 400; assert error text and restored UI state
-- [ ] **`SlotReel` / `SlotRow`** — spinning vs idle rendering (strip vs final symbol)
-- [ ] **`api/game.ts`** — fetch helpers map non-OK responses to thrown errors (mock `fetch`)
+Optional follow-ups (not required for the brief): OpenAPI schema smoke test;
+multi-worker / persistent session store (current `SessionStore` and `users_db`
+are in-memory and process-local, which is fine for this assignment).
 
 ## Architecture
 
 **Backend**
 
 - `models.py` — Pydantic response schemas
-- `store.py` — `SessionStore` (in-memory) injected via `Depends(get_store)`
+- `store.py` — `SessionStore` (in-memory) injected via `Depends(get_store)`;
+  dummy `users_db` for cash-out
 - `services/game.py` — start / fair roll / house edge / cash out
 - `routers/game.py` — HTTP mapping and status codes
 
@@ -107,8 +89,9 @@ Gaps relative to what we already cover — useful for fuller assignment/CI confi
 - `App.tsx` — session orchestration, phase state machine, staggered reel reveals
 - `components/*` — presentational `Balance`, `SlotRow`, `GameControls`
 
-Sessions live in process memory. Rolls cost 1 credit. Three matching symbols
-pay out (🍒=10, 🍋=20, 🍊=30, 🍉=40). House-edge tiers use the balance *before*
-the spin cost: at 40–60, winning results have a 30% chance of a single re-draw;
-above 60 the chance is 60%. Below 40, outcomes stay fair. Cash-out moves session
-credits into `users_db["default_user"]` and closes the session.
+Sessions live in process memory (not multi-worker safe). Rolls cost 1 credit.
+Three matching symbols pay out (🍒=10, 🍋=20, 🍊=30, 🍉=40). House-edge tiers use
+the balance *before* the spin cost: **inclusive** `40..60` → 30% chance of a
+single re-draw on a win; above 60 → 60%; below 40 → fair. Cash-out moves session
+credits into `users_db["default_user"]`, returns `account_balance`, and closes
+the session (shown on the Game Over screen).

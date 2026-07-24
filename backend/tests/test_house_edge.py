@@ -1,5 +1,5 @@
 from services import game as game_service
-from store import SessionStore
+from store import DEFAULT_USER_ID, SessionStore, users_db
 
 TRIALS = 10_000
 TOLERANCE = 0.03
@@ -13,12 +13,12 @@ def _force_redraws_to_lose(monkeypatch):
     )
 
 
-def _lose_rate(balance_before_win: int, trials: int, monkeypatch) -> float:
+def _lose_rate(balance_before_spin: int, trials: int, monkeypatch) -> float:
     _force_redraws_to_lose(monkeypatch)
     losses = 0
     for _ in range(trials):
         _symbols, reward = game_service._apply_house_edge(
-            balance_before_win,
+            balance_before_spin,
             ["🍒", "🍒", "🍒"],
             10,
         )
@@ -49,6 +49,46 @@ def test_high_band_reroll_rate_near_60_percent(monkeypatch):
     assert abs(rate - 0.60) <= TOLERANCE
 
 
+def test_single_reroll_even_if_second_is_win(monkeypatch):
+    draws = {"n": 0}
+
+    def always_win():
+        draws["n"] += 1
+        return ["🍒", "🍒", "🍒"]
+
+    monkeypatch.setattr(game_service, "_draw_symbols", always_win)
+    monkeypatch.setattr(game_service.random, "random", lambda: 0.0)
+
+    symbols, reward = game_service._apply_house_edge(50, ["🍒", "🍒", "🍒"], 10)
+
+    assert draws["n"] == 1
+    assert symbols == ["🍒", "🍒", "🍒"]
+    assert reward == 10
+
+
+def test_roll_uses_balance_before_cost_for_tier(monkeypatch):
+    store = SessionStore()
+    session = game_service.start_session(store)
+    store.update_session(session.session_id, 40)
+
+    draws = {"n": 0}
+
+    def draw():
+        draws["n"] += 1
+        if draws["n"] == 1:
+            return ["🍒", "🍒", "🍒"]
+        return ["🍒", "🍋", "🍊"]
+
+    monkeypatch.setattr(game_service, "_draw_symbols", draw)
+    monkeypatch.setattr(game_service.random, "random", lambda: 0.0)
+
+    result = game_service.roll(session.session_id, store)
+
+    assert result.reward == 0
+    assert result.symbols == ["🍒", "🍋", "🍊"]
+    assert result.credits == 39
+
+
 def test_roll_fair_session_applies_cost_and_payout(monkeypatch):
     store = SessionStore()
     session = game_service.start_session(store)
@@ -67,11 +107,16 @@ def test_roll_fair_session_applies_cost_and_payout(monkeypatch):
     assert result.symbols == ["🍒", "🍒", "🍒"]
 
 
-def test_cash_out_deletes_session():
+def test_cash_out_credits_user_account():
+    users_db[DEFAULT_USER_ID] = 0
     store = SessionStore()
     session = game_service.start_session(store)
+
     cash = game_service.cash_out(session.session_id, store)
+
     assert cash.amount == 10
+    assert cash.account_balance == 10
+    assert users_db[DEFAULT_USER_ID] == 10
     assert store.get_session(session.session_id) is None
 
     try:

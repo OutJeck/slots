@@ -16,3 +16,4 @@ class RollResponse(BaseModel):
 class CashOutResponse(BaseModel):
     session_id: str
     amount: int
+    account_balance: int
